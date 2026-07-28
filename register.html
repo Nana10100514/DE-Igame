@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>カードUID登録 — どうぶつ会社づくり</title>
+<style>
+  :root{
+    --bg:#0f1220; --panel:#1a1f36; --panel2:#232a4a; --line:#333c66;
+    --accent:#5b8cff; --accent2:#ffb454; --good:#3ddc97; --bad:#ff6b6b;
+    --text:#e8ecff; --muted:#9aa3c7;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;min-height:100%}
+  body{background:var(--bg);color:var(--text);
+       font-family:-apple-system,"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+       padding:12px;display:flex;flex-direction:column;gap:12px}
+  h1{font-size:19px;margin:0}
+  .topbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .topbar .sub{color:var(--muted);font-size:12px;margin-right:auto}
+  button{font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--line);
+         border-radius:12px;padding:10px 14px;cursor:pointer;min-height:44px}
+  button:active{transform:scale(.97)}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#06122e;font-weight:700}
+  button.warn{background:var(--bad);border-color:var(--bad);color:#2a0808;font-weight:700}
+  .scanbar{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);
+           border-radius:12px;padding:10px 14px;flex-wrap:wrap}
+  .scandot{width:12px;height:12px;border-radius:50%;background:var(--good);box-shadow:0 0 10px var(--good);flex-shrink:0}
+  .scaninfo{font-size:13px;color:var(--muted)}
+  .uidmono{font-family:ui-monospace,Menlo,monospace}
+  .pending{background:rgba(255,180,84,.16);border-color:var(--accent2)}
+  .counts{margin-left:auto;font-size:13px;color:var(--muted)}
+  .counts b{color:var(--text)}
+
+  .section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px}
+  .section h2{font-size:15px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+  .section h2 .tag{font-size:11px;color:var(--muted);font-weight:400}
+  .grid{display:grid;gap:10px}
+  .grid.companies{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+  .grid.employees{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+
+  .tile{position:relative;background:var(--panel2);border:2px solid var(--line);border-radius:12px;
+        padding:10px;cursor:pointer;display:flex;gap:10px;align-items:center;min-height:64px}
+  .tile:active{transform:scale(.98)}
+  .tile.bound{border-color:var(--good)}
+  .tile.sel{border-color:var(--accent2);box-shadow:0 0 0 2px rgba(255,180,84,.35)}
+  .thumb{width:48px;height:48px;border-radius:10px;background:#0d1024;flex-shrink:0;
+         display:flex;align-items:center;justify-content:center;font-size:24px;overflow:hidden}
+  .thumb img{width:100%;height:100%;object-fit:contain}
+  .tinfo{min-width:0;flex:1}
+  .tname{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tmeta{font-size:11px;color:var(--muted);margin-top:2px}
+  .tuid{font-size:11px;margin-top:3px}
+  .tuid.set{color:var(--good)}
+  .tuid.unset{color:var(--muted)}
+  .clearbtn{position:absolute;right:6px;top:6px;min-height:0;padding:3px 8px;font-size:11px;
+            border-radius:8px;background:#33203a;border-color:#5a3a63;color:#ffd0e6}
+
+  .companies .thumb{width:56px;height:56px;font-size:26px}
+  .colordots{display:inline-flex;gap:4px;vertical-align:middle;margin-left:4px}
+  .cdot{width:11px;height:11px;border-radius:50%;display:inline-block}
+  .cdot.red{background:#ef3d23}.cdot.yellow{background:#f0df22}
+  .cdot.blue{background:#5869b6}.cdot.pink{background:#d959a5}
+
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--panel2);
+         border:1px solid var(--accent);border-radius:12px;padding:12px 18px;font-size:15px;opacity:0;
+         transition:opacity .2s;pointer-events:none;z-index:50;max-width:92%;text-align:center}
+  .toast.show{opacity:1}
+  .toast.good{border-color:var(--good)}
+  .toast.bad{border-color:var(--bad)}
+  .hint{color:var(--muted);font-size:12px;line-height:1.6}
+  input[type=file]{display:none}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>🎴 カードUID登録</h1>
+  <span class="sub">どうぶつ会社づくりゲーム用</span>
+  <button id="btnImport">JSONを取込</button>
+  <button id="btnSeed">リポジトリのJSONを取込</button>
+  <button id="btnExport" class="primary">JSONを書き出し</button>
+  <button id="btnClear" class="warn">全消去</button>
+  <input type="file" id="fileInput" accept="application/json,.json">
+</div>
+
+<div class="scanbar" id="scanbar">
+  <div class="scandot" id="scandot"></div>
+  <div class="scaninfo" id="scaninfo">リーダーにカードをかざしてください（またはカード種をタップ → かざす）</div>
+  <div class="scaninfo uidmono" id="lastuid"></div>
+  <div class="counts" id="counts"></div>
+</div>
+
+<div class="section">
+  <h2>会社カード <span class="tag">（業績に反映される色つき）</span></h2>
+  <div class="grid companies" id="companyGrid"></div>
+</div>
+
+<div class="section">
+  <h2>社員カード</h2>
+  <div class="grid employees" id="employeeGrid"></div>
+</div>
+
+<p class="hint">
+  登録手順：①カードをリーダーにかざす → 未登録なら「割り当てるカード種をタップ」。
+  もしくは ②先にカード種をタップ → 続けてカードをかざす。どちらの順でも登録できます。<br>
+  データはこのブラウザ内（localStorage）に保存されます。バックアップや別端末への移行は「JSONを書き出し」を使ってください。
+</p>
+
+<div class="toast" id="toast"></div>
+
+<script src="game-data.js"></script>
+<script src="card-db.js"></script>
+<script>
+"use strict";
+
+const SKILL_COLOR_LABEL = { red:"体力", yellow:"コミュ力", blue:"知力", pink:"器用さ" };
+const DIET_LABEL = { grass:"草食", meat:"肉食", omnivore:"雑食" };
+const HABITAT_LABEL = { land:"陸", sea:"海" };
+const SEED_URL = "card-uid-db.json";
+
+let db = CardDB.load();
+let pendingEntity = null;   // 先にタップされたカード種 {kind,id}
+let lastScanUid = null;     // 先にかざされた未登録UID
+
+const companyGrid = document.getElementById("companyGrid");
+const employeeGrid = document.getElementById("employeeGrid");
+const scanbar = document.getElementById("scanbar");
+const scaninfo = document.getElementById("scaninfo");
+const lastuid = document.getElementById("lastuid");
+const countsEl = document.getElementById("counts");
+
+function esc(s){ return (s+"").replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+let toastTimer=null;
+function toast(msg, kind){
+  const t=document.getElementById("toast");
+  t.textContent=msg;
+  t.className="toast show"+(kind?(" "+kind):"");
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove("show"),2000);
+}
+
+function thumbHtml(imgPath, fallbackEmoji){
+  return `<div class="thumb"><img src="${esc(imgPath)}" alt="" onerror="this.remove();"><span>${fallbackEmoji}</span></div>`;
+}
+
+function colorDots(colors){
+  return `<span class="colordots">`+colors.map(c=>`<span class="cdot ${c}" title="${SKILL_COLOR_LABEL[c]}"></span>`).join("")+`</span>`;
+}
+
+function isSel(kind,id){ return pendingEntity && pendingEntity.kind===kind && pendingEntity.id===id; }
+
+function render(){
+  // 会社
+  companyGrid.innerHTML="";
+  COMPANY_DATA.forEach(co=>{
+    const uid = CardDB.uidForEntity(db,"company",co.id);
+    const tile=document.createElement("div");
+    tile.className="tile"+(uid?" bound":"")+(isSel("company",co.id)?" sel":"");
+    tile.innerHTML=`
+      ${thumbHtml(co.image,"🏢")}
+      <div class="tinfo">
+        <div class="tname">${esc(co.name)}</div>
+        <div class="tmeta">${esc(co.industry)} ${colorDots(co.colors)}</div>
+        <div class="tuid ${uid?'set':'unset'}">${uid?('UID: '+esc(uid)):'未登録'}</div>
+      </div>
+      ${uid?'<button class="clearbtn" data-clear="company" data-id="'+esc(co.id)+'">解除</button>':''}
+    `;
+    tile.onclick=(e)=>{ if(e.target.closest("[data-clear]")) return; onTapEntity("company",co.id); };
+    companyGrid.appendChild(tile);
+  });
+  // 社員
+  employeeGrid.innerHTML="";
+  EMPLOYEE_DATA.forEach(em=>{
+    const uid = CardDB.uidForEntity(db,"employee",em.id);
+    const tile=document.createElement("div");
+    tile.className="tile"+(uid?" bound":"")+(isSel("employee",em.id)?" sel":"");
+    tile.innerHTML=`
+      ${thumbHtml(em.image,"🐾")}
+      <div class="tinfo">
+        <div class="tname">${esc(em.name)}</div>
+        <div class="tmeta">${DIET_LABEL[em.diet]||em.diet}・${HABITAT_LABEL[em.habitat]||em.habitat}</div>
+        <div class="tuid ${uid?'set':'unset'}">${uid?('UID: '+esc(uid)):'未登録'}</div>
+      </div>
+      ${uid?'<button class="clearbtn" data-clear="employee" data-id="'+esc(em.id)+'">解除</button>':''}
+    `;
+    tile.onclick=(e)=>{ if(e.target.closest("[data-clear]")) return; onTapEntity("employee",em.id); };
+    employeeGrid.appendChild(tile);
+  });
+
+  const c=CardDB.counts(db);
+  countsEl.innerHTML=`会社 <b>${c.companies}</b>/${COMPANY_DATA.length}　社員 <b>${c.employees}</b>/${EMPLOYEE_DATA.length}`;
+  updateScanInfo();
+}
+
+function nameOf(kind,id){
+  const list = kind==="company"?COMPANY_DATA:EMPLOYEE_DATA;
+  const hit=list.find(x=>x.id===id);
+  return hit?hit.name:id;
+}
+
+function updateScanInfo(){
+  scanbar.classList.toggle("pending", !!(pendingEntity||lastScanUid));
+  if(pendingEntity){
+    scaninfo.textContent = `「${nameOf(pendingEntity.kind,pendingEntity.id)}」に割り当てるカードをかざしてください（もう一度タップで取消）`;
+  }else if(lastScanUid){
+    scaninfo.textContent = `未登録UIDを保持中 — 割り当てるカード種をタップしてください`;
+  }else{
+    scaninfo.textContent = "リーダーにカードをかざしてください（またはカード種をタップ → かざす）";
+  }
+}
+
+// カード種タップ
+function onTapEntity(kind,id){
+  if(lastScanUid){
+    // 先にかざした未登録UIDがある → 即束縛
+    doBind(lastScanUid, kind, id);
+    lastScanUid=null;
+    return;
+  }
+  if(isSel(kind,id)){ pendingEntity=null; render(); return; } // 同じものを再タップ→取消
+  pendingEntity={kind,id};
+  render();
+}
+
+// 束縛実行
+function doBind(rawUid, kind, id){
+  const r=CardDB.bind(db, rawUid, kind, id);
+  if(!r.ok){ toast("UIDが空です","bad"); return; }
+  CardDB.save(db);
+  pendingEntity=null;
+  let msg=`${nameOf(kind,id)} ← UID ${r.uid}`;
+  if(r.prev){ msg+=`（旧: ${nameOf(r.prev.kind,r.prev.id)} の登録を解除）`; }
+  render();
+  toast(msg,"good");
+}
+
+// スキャン処理
+function handleScan(rawUid){
+  const uid=CardDB.normalizeUid(rawUid);
+  lastuid.textContent = uid ? ("UID: "+uid) : "";
+  flashDot();
+  if(!uid) return;
+
+  if(pendingEntity){
+    doBind(uid, pendingEntity.kind, pendingEntity.id);
+    return;
+  }
+  const hit=CardDB.lookup(db, uid);
+  if(hit){
+    lastScanUid=null;
+    toast(`登録済み: ${nameOf(hit.kind,hit.id)}（${hit.kind==="company"?"会社":"社員"}）`);
+    render();
+    return;
+  }
+  // 未登録 → カード種タップ待ち
+  lastScanUid=uid;
+  updateScanInfo();
+  toast(`未登録UID ${uid} — 割り当てるカード種をタップ`,"");
+}
+
+function flashDot(){
+  const d=document.getElementById("scandot");
+  d.style.background="var(--accent2)"; d.style.boxShadow="0 0 12px var(--accent2)";
+  setTimeout(()=>{ d.style.background="var(--good)"; d.style.boxShadow="0 0 10px var(--good)"; },250);
+}
+
+// 解除ボタン
+document.addEventListener("click",(e)=>{
+  const b=e.target.closest("[data-clear]");
+  if(!b) return;
+  e.stopPropagation();
+  const kind=b.dataset.clear, id=b.dataset.id;
+  CardDB.unbindEntity(db, kind, id);
+  CardDB.save(db);
+  render();
+  toast(`${nameOf(kind,id)} の登録を解除`,"");
+});
+
+// キーボードウェッジ読み取り
+let buf=""; let lastKeyTime=0;
+document.addEventListener("keydown",(e)=>{
+  const now=Date.now();
+  if(now-lastKeyTime>800) buf="";
+  lastKeyTime=now;
+  if(e.key==="Enter"){
+    if(buf.length>0){ const u=buf.trim(); buf=""; e.preventDefault(); handleScan(u); }
+    return;
+  }
+  if(e.key.length===1){ buf+=e.key; }
+});
+
+// エクスポート
+document.getElementById("btnExport").onclick=()=>{
+  const blob=new Blob([CardDB.exportJson(db)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download="card-uid-db.json"; a.click();
+  URL.revokeObjectURL(url);
+  toast("card-uid-db.json を書き出しました","good");
+};
+
+// インポート
+document.getElementById("btnImport").onclick=()=>document.getElementById("fileInput").click();
+document.getElementById("fileInput").onchange=(e)=>{
+  const f=e.target.files&&e.target.files[0];
+  if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      db=CardDB.importJson(r.result);
+      CardDB.save(db);
+      render();
+      toast("JSONを取り込みました","good");
+    }catch(err){ toast("JSONの読み込みに失敗しました","bad"); }
+  };
+  r.readAsText(f);
+  e.target.value="";
+};
+
+// リポジトリのseed取込
+document.getElementById("btnSeed").onclick=async()=>{
+  try{
+    const res=await fetch(SEED_URL,{cache:"no-store"});
+    if(!res.ok){ toast(SEED_URL+" が見つかりません","bad"); return; }
+    if(!confirm("現在の登録内容を "+SEED_URL+" の内容で置き換えます。よろしいですか？")) return;
+    db=CardDB.importJson(await res.text());
+    CardDB.save(db);
+    render();
+    toast("リポジトリのJSONを取り込みました","good");
+  }catch(err){ toast("取り込みに失敗しました","bad"); }
+};
+
+// 全消去
+document.getElementById("btnClear").onclick=()=>{
+  if(!confirm("すべてのUID登録を消去します。よろしいですか？（書き出したJSONは残ります）")) return;
+  db=CardDB.emptyDb();
+  CardDB.save(db);
+  pendingEntity=null; lastScanUid=null;
+  render();
+  toast("すべて消去しました","");
+};
+
+render();
+</script>
+</body>
+</html>
