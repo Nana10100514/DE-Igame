@@ -1,5 +1,34 @@
 {
   "version": 1,
-  "companies": {},
-  "employees": {}
+  "companies": {
+    "BC242FBB": "service",
+    "AC682EBB": "it",
+    "016F3CA1": "education",
+    "CC0E2FBB": "finance",
+    "014B39A1": "construction",
+    "8C272FBB": "clinic",
+    "5CC32BBB": "restaurant",
+    "8CFE2EBB": "manufacturing"
+},
+  "employees": {"04008F827E2491": "elephant",
+    "040090827E2491": "lion",
+    "040091827E2491": "sacabambaspis",
+    "040092827E2491": "mouse",
+    "040093827E2491": "bear",
+    "040094827E2491": "giraffe",
+    "040095827E2491": "sloth",
+    "040096827E2491": "cat",
+    "040097827E2491": "rabbit",
+    "040098827E2491": "owl",
+    "045451827E2491": "chameleon",
+    "045450827E2491": "crab",
+    "04544E827E2491": "octopus",
+    "04544D827E2491": "shrimp",
+    "04544C827E2491": "wolf",
+    "04544B827E2491": "tuna",
+    "04544A827E2491": "dog",
+    "045449827E2491": "dolphin",
+    "045448827E2491": "penguin",
+    "04544F827E2491": "goat"
+}
 }
