@@ -24,44 +24,27 @@ const SKILL_SHORT_LABELS = {
 };
 
 
+/* ---------------------------------------------------------
+   隠しステータス設定
+
+   社員登録画面で「育休対象」「パワハラ」を表示するかどうか。
+   false ＝ 隠しステータス（登録時には見えない）
+   true  ＝ 従来どおり登録画面にも表示する
+
+   ※ データ自体は保持されるため、イベント（育児休業・
+     パワーハラスメント・社員ストライキ）の判定と表示は
+     この設定に関係なく従来どおり動作します。
+--------------------------------------------------------- */
+
+const SHOW_PARENTAL_LEAVE_TRAIT = false;
+const SHOW_HARASSMENT_TRAIT = false;
+
+
 /* =========================================================
    会社データ
 ========================================================= */
 
 // COMPANY_DATA は game-data.js で定義（登録ページと共有）
-
-// game-data.js に未登録の場合のみ、追加の会社3社を補完します。
-[
-  {
-    id: "clinic",
-    name: "ふわふわクリニック",
-    industry: "医療",
-    image: "images/company-clinic.png",
-    colors: ["pink", "blue"]
-  },
-  {
-    id: "manufacturing",
-    name: "こねこね職人",
-    industry: "製造",
-    image: "images/company-manufacturing.png",
-    colors: ["red", "pink"]
-  },
-  {
-    id: "restaurant",
-    name: "もぐもぐ工房",
-    industry: "飲食",
-    image: "images/company-restaurant.png",
-    colors: ["yellow", "pink"]
-  }
-].forEach((company) => {
-  const alreadyExists = COMPANY_DATA.some(
-    (registeredCompany) => registeredCompany.id === company.id
-  );
-
-  if (!alreadyExists) {
-    COMPANY_DATA.push(company);
-  }
-});
 
 
 /* =========================================================
@@ -216,6 +199,7 @@ const employeePreview =
 
 const employeePreviewName =
   document.getElementById("employeePreviewName");
+
 const employeeSkillPreview =
   document.getElementById("employeeSkillPreview");
 
@@ -413,6 +397,8 @@ function wait(milliseconds) {
     window.setTimeout(resolve, milliseconds);
   });
 }
+
+
 function showMessage(message, type = "normal") {
   window.clearTimeout(messageTimer);
 
@@ -646,6 +632,8 @@ function renderStory() {
     isLastStory
   );
 }
+
+
 function goToNextStory() {
   if (
     storyIndex <
@@ -831,13 +819,16 @@ function renderCompanyPreview(company) {
       `company-score-color-dot--${color}`;
 
     label.textContent =
-      `${SKILL_SHORT_LABELS[color]}・${SKILL_LABELS[color]}`;
+      `${SKILL_SHORT_LABELS[color]}・` +
+      SKILL_LABELS[color];
 
     chip.append(dot, label);
 
     companyScoreColorList.appendChild(chip);
   });
 }
+
+
 function receiveCompany(companyId) {
   const company = COMPANY_DATA.find(
     (item) => item.id === companyId
@@ -848,6 +839,7 @@ function receiveCompany(companyId) {
       "会社カードを確認できませんでした。",
       "error"
     );
+
     return;
   }
 
@@ -864,6 +856,7 @@ function receiveCompany(companyId) {
       "この会社カードはすでに登録されています。",
       "error"
     );
+
     return;
   }
 
@@ -917,6 +910,7 @@ function mockCompanyScan() {
       "登録できる会社がありません。",
       "error"
     );
+
     return;
   }
 
@@ -942,7 +936,8 @@ function renderEmployeeRegistration() {
     players[currentEmployeePlayerIndex];
 
   employeeCurrentPlayer.textContent =
-    `${currentPlayer.name}｜${currentPlayer.company.name}`;
+    `${currentPlayer.name}｜` +
+    currentPlayer.company.name;
 
   renderEmployeeSlots();
 
@@ -1026,6 +1021,8 @@ function setSkillPreview(
   valueElement.textContent =
     String(safeValue);
 }
+
+
 function renderEmployeePreview(employee) {
   const currentPlayer =
     players[currentEmployeePlayerIndex];
@@ -1087,7 +1084,11 @@ function renderEmployeePreview(employee) {
     getHabitatLabel(employee.habitat)
   ];
 
-  if (employee.parentalLeave) {
+  // 育休対象：隠しステータス（SHOW_PARENTAL_LEAVE_TRAIT で切替）
+  if (
+    SHOW_PARENTAL_LEAVE_TRAIT &&
+    employee.parentalLeave
+  ) {
     traits.push("育休対象");
   }
 
@@ -1095,7 +1096,11 @@ function renderEmployeePreview(employee) {
     traits.push("冬眠");
   }
 
-  if (employee.powerHarassment) {
+  // パワハラ：隠しステータス（SHOW_HARASSMENT_TRAIT で切替）
+  if (
+    SHOW_HARASSMENT_TRAIT &&
+    employee.powerHarassment
+  ) {
     traits.push(
       employee.harassmentType ||
       "パワハラ注意"
@@ -1202,7 +1207,8 @@ function receiveEmployee(employeeId) {
 
     return;
   }
-     selectedEmployee =
+
+  selectedEmployee =
     cloneEmployee(sourceEmployee);
 
   renderEmployeePreview(
@@ -1210,7 +1216,7 @@ function receiveEmployee(employeeId) {
   );
 
   showMessage(
-    `${selectedEmployee.name}を読み込みました。`,
+    `${selectedEmployee.name}を読み取りました。`,
     "success"
   );
 }
@@ -1218,26 +1224,25 @@ function receiveEmployee(employeeId) {
 
 function mockEmployeeScan() {
   const usedEmployeeIds =
-    players.flatMap((player) =>
-      player.employees.map(
+    players.flatMap((player) => {
+      return player.employees.map(
         (employee) => employee.id
-      )
-    );
+      );
+    });
 
   const candidates =
-    EMPLOYEE_DATA.filter(
-      (employee) =>
-        !usedEmployeeIds.includes(
-          employee.id
-        )
-    );
+    EMPLOYEE_DATA.filter((employee) => {
+      return !usedEmployeeIds.includes(
+        employee.id
+      );
+    });
 
   const employee =
     getRandomItem(candidates);
 
   if (!employee) {
     showMessage(
-      "登録できる社員がありません。",
+      "登録できる社員がいません。",
       "error"
     );
 
@@ -1248,55 +1253,107 @@ function mockEmployeeScan() {
 }
 
 
-function registerEmployee() {
+function registerSelectedEmployee() {
   if (!selectedEmployee) {
+    showMessage(
+      "先に社員カードを読み取ってください。",
+      "error"
+    );
+
     return;
   }
 
   const currentPlayer =
     players[currentEmployeePlayerIndex];
+
+  if (
+    currentPlayer.employees.length >=
+    MAX_EMPLOYEES
+  ) {
+    showMessage(
+      "社員は4人まで登録できます。",
+      "error"
+    );
+
+    return;
+  }
+
+  const employeeName =
+    selectedEmployee.name;
 
   currentPlayer.employees.push(
     selectedEmployee
   );
 
+  selectedEmployee = null;
+
+  renderEmployeeRegistration();
+
   showMessage(
-    `${selectedEmployee.name}を登録しました。`,
+    `${employeeName}を登録しました。`,
     "success"
   );
-
-  clearEmployeePreview();
-  renderEmployeeRegistration();
 }
 
 
-function cancelEmployeeRegistration() {
+function cancelSelectedEmployee() {
   const currentPlayer =
     players[currentEmployeePlayerIndex];
 
   if (selectedEmployee) {
+    const employeeName =
+      selectedEmployee.name;
+
     clearEmployeePreview();
+    renderEmployeeRegistration();
+
+    showMessage(
+      `${employeeName}の読み取りを取り消しました。`
+    );
+
     return;
   }
 
   if (
-    currentPlayer.employees.length === 0
+    currentPlayer.employees.length > 0
   ) {
+    const removedEmployee =
+      currentPlayer.employees.pop();
+
+    renderEmployeeRegistration();
+
+    showMessage(
+      `${removedEmployee.name}の登録を取り消しました。`
+    );
+
     return;
   }
 
-  currentPlayer.employees.pop();
-
-  renderEmployeeRegistration();
-
   showMessage(
-    "最後の社員登録を取り消しました。"
+    "取り消せる社員がいません。",
+    "error"
   );
 }
 
 
-function finishEmployeeRegistration() {
+function finishCurrentEmployeeRegistration() {
+  const currentPlayer =
+    players[currentEmployeePlayerIndex];
+
+  if (
+    currentPlayer.employees.length <
+    MAX_EMPLOYEES
+  ) {
+    showMessage(
+      "社員を4人登録してください。",
+      "error"
+    );
+
+    return;
+  }
+
   currentEmployeePlayerIndex += 1;
+  selectedEmployee = null;
 
   if (
     currentEmployeePlayerIndex >=
@@ -1306,7 +1363,6 @@ function finishEmployeeRegistration() {
     return;
   }
 
-  selectedEmployee = null;
   renderEmployeeRegistration();
 }
 
@@ -1319,299 +1375,334 @@ function createTurnEvents() {
   const childcareEvent =
     EVENT_DATA.find(
       (event) =>
-        event.id === "childcareleave"
+        event.id === "childcare"
     );
 
   const otherEvents =
-    EVENT_DATA.filter(
-      (event) =>
-        event.id !== "childcareleave"
-    );
+    shuffleArray(
+      EVENT_DATA.filter(
+        (event) =>
+          event.id !== "childcare"
+      )
+    ).slice(0, 4);
 
   turnEvents = [
-    getRandomItem(otherEvents),
+    otherEvents[0],
     childcareEvent,
-    ...shuffleArray(otherEvents).slice(0, 3)
+    otherEvents[1],
+    otherEvents[2],
+    otherEvents[3]
   ];
 }
+
+
 function startGame() {
   currentTurn = 1;
   currentEventIndex = 0;
+  eventRunning = false;
+
+  players.forEach((player) => {
+    player.performanceBonus = 0;
+    player.whiteStars = 0;
+
+    player.currentPerformance =
+      calculateCompanyPerformance(player);
+
+    player.previousPerformance =
+      player.currentPerformance;
+  });
 
   createTurnEvents();
-  updateAllPerformance();
 
   showScreen("gameScreen");
-  renderTurn();
+  renderGame();
 }
 
 
-function renderTurn() {
+function renderGame() {
   updateAllPerformance();
+
+  turnDisplay.textContent =
+    `${currentTurn}/${TOTAL_TURNS}`;
 
   const event =
     turnEvents[currentEventIndex];
 
-  turnDisplay.textContent =
-    `TURN ${currentTurn} / 5`;
+  if (event) {
+    eventImage.src = event.image;
+    eventImage.alt = event.title;
 
-  eventImage.src = event.image;
-  eventImage.alt = event.title;
+    eventTitle.textContent =
+      event.title;
 
-  eventTitle.textContent =
-    event.title;
+    eventStatusText.textContent =
+      event.description;
+  }
 
-  eventStatusText.textContent =
-    event.description;
+  nextTurnButton.disabled =
+    eventRunning;
 
-  renderPerformanceRanking();
-  renderWhiteRanking();
+  nextTurnButton.textContent =
+    eventRunning
+      ? "イベント処理中"
+      : "イベントを実行";
+
+  renderRankings();
   renderCompanyStats();
-  renderAdvice();
 }
 
 
-function renderPerformanceRanking() {
+/* =========================================================
+   ランキング
+========================================================= */
+
+function createRankingItem(
+  index,
+  companyName,
+  value
+) {
+  const item =
+    document.createElement("li");
+
+  const nameElement =
+    document.createElement("span");
+
+  const valueElement =
+    document.createElement("span");
+
+  item.className = "ranking-item";
+
+  nameElement.className =
+    "ranking-company-name";
+
+  valueElement.className =
+    "ranking-value";
+
+  nameElement.textContent =
+    `${index + 1}位 ${companyName}`;
+
+  valueElement.textContent =
+    value;
+
+  item.append(
+    nameElement,
+    valueElement
+  );
+
+  return item;
+}
+
+
+function renderRankings() {
   performanceRanking.innerHTML = "";
+  whiteRanking.innerHTML = "";
 
   getPerformanceRanking().forEach(
     (player, index) => {
-      const item =
-        document.createElement("div");
-
-      item.className =
-        "ranking-item";
-
-      const changed =
-        player.currentPerformance !==
-        player.previousPerformance;
-
-      item.innerHTML = `
-        <span class="ranking-rank">
-          ${index + 1}
-        </span>
-
-        <span class="ranking-name">
-          ${player.name}
-        </span>
-
-        <span class="ranking-score ${
-          changed ? "is-blink" : ""
-        }">
-          ${player.currentPerformance}
-        </span>
-      `;
-
       performanceRanking.appendChild(
-        item
+        createRankingItem(
+          index,
+          player.company.name,
+          `${player.currentPerformance}pt`
+        )
+      );
+    }
+  );
+
+  getWhiteRanking().forEach(
+    (player, index) => {
+      whiteRanking.appendChild(
+        createRankingItem(
+          index,
+          player.company.name,
+          `${getStarText(player.whiteStars)} ${player.whiteStars}`
+        )
       );
     }
   );
 }
 
 
-function renderWhiteRanking() {
-  whiteRanking.innerHTML = "";
+/* =========================================================
+   会社ステータス
+========================================================= */
 
-  getWhiteRanking().forEach(
-    (player, index) => {
-      const item =
-        document.createElement("div");
+function createStatRow(
+  label,
+  value,
+  maximum
+) {
+  const row =
+    document.createElement("div");
 
-      item.className =
-        "ranking-item";
+  const labelElement =
+    document.createElement("span");
 
-      item.innerHTML = `
-        <span class="ranking-rank">
-          ${index + 1}
-        </span>
+  const track =
+    document.createElement("div");
 
-        <span class="ranking-name">
-          ${player.name}
-        </span>
+  const fill =
+    document.createElement("div");
 
-        <span class="ranking-score">
-          ${getStarText(
-            player.whiteStars
-          )}
-        </span>
-      `;
+  const valueElement =
+    document.createElement("strong");
 
-      whiteRanking.appendChild(item);
-    }
+  row.className = "stat-row";
+
+  labelElement.className =
+    "stat-label";
+
+  track.className =
+    "stat-bar-track";
+
+  fill.className =
+    "stat-bar-fill";
+
+  valueElement.className =
+    "stat-value";
+
+  const percentage = Math.max(
+    0,
+    Math.min(
+      100,
+      maximum > 0
+        ? (value / maximum) * 100
+        : 0
+    )
   );
+
+  labelElement.textContent = label;
+
+  fill.style.width =
+    `${percentage}%`;
+
+  valueElement.textContent =
+    `${value}pt`;
+
+  track.appendChild(fill);
+
+  row.append(
+    labelElement,
+    track,
+    valueElement
+  );
+
+  return row;
 }
 
 
 function renderCompanyStats() {
   companyStats.innerHTML = "";
 
+  companyStats.className =
+    `company-stats company-count-${players.length}`;
+
+  const maximumPerformance =
+    Math.max(
+      40,
+      ...players.map(
+        (player) =>
+          player.currentPerformance
+      )
+    );
+
   players.forEach((player) => {
     const card =
+      document.createElement("article");
+
+    const header =
+      document.createElement("header");
+
+    const name =
+      document.createElement("h3");
+
+    const stars =
+      document.createElement("div");
+
+    const bars =
       document.createElement("div");
 
     card.className =
-      "company-status-card";
+      "company-stat-card";
 
-    card.innerHTML = `
-      <div class="company-status-header">
-        <img
-          src="${player.company.image}"
-          alt="${player.company.name}"
-        >
+    header.className =
+      "company-stat-header";
 
-        <div>
-          <p>${player.name}</p>
-          <strong>
-            ${player.company.name}
-          </strong>
-        </div>
-      </div>
+    name.className =
+      "company-stat-name";
 
-      <div class="company-status-value">
-        業績：
-        ${player.currentPerformance}
-      </div>
+    stars.className =
+      "company-white-stars";
 
-      <div class="company-status-value">
-        ホワイト度：
-        ${getStarText(
-          player.whiteStars
-        )}
-      </div>
-    `;
+    bars.className =
+      "company-bars";
+
+    name.textContent =
+      player.company.name;
+
+    stars.textContent =
+      `${getStarText(player.whiteStars)} ` +
+      player.whiteStars;
+
+    const employeeScore =
+      player.employees.reduce(
+        (total, employee) => {
+          return (
+            total +
+            getEmployeeContribution(
+              employee,
+              player.company
+            )
+          );
+        },
+        0
+      );
+
+    header.append(name, stars);
+
+    bars.appendChild(
+      createStatRow(
+        "業績",
+        player.currentPerformance,
+        maximumPerformance
+      )
+    );
+
+    bars.appendChild(
+      createStatRow(
+        "社員力",
+        employeeScore,
+        maximumPerformance
+      )
+    );
+
+    card.append(header, bars);
 
     companyStats.appendChild(card);
   });
 }
-function renderAdvice() {
-  const leader =
-    getPerformanceRanking()[0];
-
-  gameAdvice.textContent =
-    `${leader.name}が現在トップです！`;
-}
 
 
 /* =========================================================
-   イベント処理
+   イベントモーダル
 ========================================================= */
 
-async function executeCurrentEvent() {
-  if (eventRunning) {
-    return;
-  }
-
-  eventRunning = true;
-
-  nextTurnButton.disabled = true;
-
-  const event =
-    turnEvents[currentEventIndex];
-
-  for (const player of players) {
-    await applyEventToPlayer(
-      player,
-      event
-    );
-  }
-
-  updateAllPerformance();
-
-  renderTurn();
-
-  eventRunning = false;
-
-  nextTurnButton.disabled = false;
-}
-
-
-async function applyEventToPlayer(
-  player,
-  event
-) {
-  switch (event.id) {
-    case "childcareleave":
-      await applyChildcareLeave(
-        player,
-        event
-      );
-      break;
-
-    case "training":
-      await applyTraining(
-        player,
-        event
-      );
-      break;
-
-    case "headhunting":
-      await applyHeadhunting(
-        player,
-        event
-      );
-      break;
-
-    case "everyone":
-      await applyEveryone(
-        player,
-        event
-      );
-      break;
-
-    case "firestorm":
-      await applyFirestorm(
-        player,
-        event
-      );
-      break;
-
-    case "hibernation":
-      await applyHibernation(
-        player,
-        event
-      );
-      break;
-
-    case "powerharassment":
-      await applyPowerHarassment(
-        player,
-        event
-      );
-      break;
-
-    case "strike":
-      await applyStrike(
-        player,
-        event
-      );
-      break;
-
-    case "notalone":
-      await applyNotAlone(
-        player,
-        event
-      );
-      break;
-
-    default:
-      break;
-  }
-}
-async function showEventModal({
-  player,
-  event,
-  title,
-  message,
+function openEventModal({
+  companyName = "",
+  title = "",
+  message = "",
   employee = null,
-  options = ["OK"]
+  options = []
 }) {
   return new Promise((resolve) => {
     eventModalCompany.textContent =
-      `${player.name}｜${player.company.name}`;
+      companyName;
 
-    eventModalTitle.textContent = title;
-    eventModalMessage.textContent = message;
+    eventModalTitle.textContent =
+      title;
+
+    eventModalMessage.textContent =
+      message;
 
     eventModalOptions.innerHTML = "";
 
@@ -1630,25 +1721,44 @@ async function showEventModal({
         employee.name;
 
       eventModalEmployeeDetail.textContent =
-        `貢献度 ${getEmployeeContribution(
-          employee,
-          player.company
-        )}`;
+        `${getDietLabel(employee.diet)}・` +
+        `${getHabitatLabel(employee.habitat)}`;
     } else {
       eventModalEmployeePreview.classList.add(
         "hidden"
       );
+
+      eventModalEmployeeImage.removeAttribute(
+        "src"
+      );
+
+      eventModalEmployeeName.textContent = "";
+      eventModalEmployeeDetail.textContent = "";
     }
 
-    options.forEach((label, index) => {
+    options.forEach((option) => {
       const button =
         document.createElement("button");
 
       button.type = "button";
-      button.className =
-        "event-modal-button";
 
-      button.textContent = label;
+      button.className =
+        "event-option-button";
+
+      button.textContent =
+        option.label;
+
+      if (option.important) {
+        button.classList.add(
+          "is-important"
+        );
+      }
+
+      if (option.danger) {
+        button.classList.add(
+          "is-danger"
+        );
+      }
 
       button.addEventListener(
         "click",
@@ -1657,14 +1767,14 @@ async function showEventModal({
             "hidden"
           );
 
-          resolve(index);
+          resolve(option.value);
         },
-        { once: true }
+        {
+          once: true
+        }
       );
 
-      eventModalOptions.appendChild(
-        button
-      );
+      eventModalOptions.appendChild(button);
     });
 
     eventModal.classList.remove("hidden");
@@ -1672,266 +1782,979 @@ async function showEventModal({
 }
 
 
-async function applyChildcareLeave(
+function chooseEmployee(
   player,
-  event
+  message
 ) {
-  const candidates =
-    player.employees.filter(
-      (employee) =>
-        employee.parentalLeave
-    );
-
-  if (!candidates.length) {
-    return;
-  }
-
-  const employee =
-    getRandomItem(candidates);
-
-  player.performanceBonus -=
-    getEmployeeContribution(
-      employee,
-      player.company
-    );
-
-  await showEventModal({
-    player,
-    event,
-    title: event.title,
-    message:
-      "育休取得のため一時的に業績が下がりました。",
-    employee
-  });
-}
-
-
-async function applyTraining(
-  player,
-  event
-) {
-  player.performanceBonus += 2;
-
-  await showEventModal({
-    player,
-    event,
-    title: event.title,
-    message:
-      "研修の成果で業績がアップしました。"
-  });
-}
-async function applyHeadhunting(
-  player,
-  event
-) {
-  if (!player.employees.length) {
-    return;
-  }
-
-  const employee =
-    getRandomItem(player.employees);
-
-  player.performanceBonus += 3;
-
-  await showEventModal({
-    player,
-    event,
-    title: event.title,
-    message:
-      `${employee.name}が注目され、会社の評価が上がりました。`,
-    employee
-  });
-}
-
-
-async function applyEveryone(
-  player,
-  event
-) {
-  player.whiteStars += 1;
-
-  await showEventModal({
-    player,
-    event,
-    title: event.title,
-    message:
-      "社員全員の協力でホワイト度が上昇しました。"
-  });
-}
-
-
-async function applyFirestorm(
-  player,
-  event
-) {
-  player.performanceBonus -= 2;
-
-  await showEventModal({
-    player,
-    event,
-    title: event.title,
-    message:
-      "トラブル対応で業績が一時的に低下しました。"
-  });
-}
-
-
-async function applyHibernation(
-  player,
-  event
-) {
-  const candidates =
-    player.employees.filter(
-      (employee) =>
-        employee.hibernation
-    );
-
-  if (!candidates.length) {
-    return;
-  }
-
-  const employee =
-    getRandomItem(candidates);
-
-  player.performanceBonus -= 1;
-
-  await showEventModal({
-    player,
-    event,
-    title: event.title,
-    message:
-      `${employee.name}は冬眠中です。`,
-    employee
-  });
-}
-async function applyPowerHarassment(
-  player,
-  event
-) {
-  const candidates =
-    player.employees.filter(
-      (employee) =>
-        employee.powerHarassment
-    );
-
-  if (!candidates.length) {
-    return;
-  }
-
-  const employee =
-    getRandomItem(candidates);
-
-  player.whiteStars = Math.max(
-    0,
-    player.whiteStars - 1
-  );
-
-  await showEventModal({
-    player,
-    event,
-    title: event.title,
-    message:
-      `${employee.name}の言動によりホワイト度が下がりました。`,
-    employee
-  });
-}
-
-
-async function applyStrike(
-  player,
-  event
-) {
-  player.performanceBonus -= 3;
-
-  await showEventModal({
-    player,
-    event,
-    title: event.title,
-    message:
-      "ストライキが発生し、業績が大きく低下しました。"
-  });
-}
-
-
-async function applyNotAlone(
-  player,
-  event
-) {
-  player.whiteStars += 2;
-
-  await showEventModal({
-    player,
-    event,
-    title: event.title,
-    message:
-      "助け合いによって働きやすい会社になりました。"
+  return openEventModal({
+    companyName: player.company.name,
+    title: "社員を選択",
+    message,
+    options: player.employees.map(
+      (employee) => ({
+        label: employee.name,
+        value: employee.id
+      })
+    )
   });
 }
 
 
 /* =========================================================
-   ターン進行
+   イベント実行
 ========================================================= */
 
-async function nextTurn() {
+async function executeCurrentEvent() {
   if (eventRunning) {
     return;
   }
 
-  await executeCurrentEvent();
+  const event =
+    turnEvents[currentEventIndex];
 
-  if (currentTurn >= 5) {
+  if (!event) {
+    return;
+  }
+
+  eventRunning = true;
+  renderGame();
+
+  try {
+    switch (event.id) {
+      case "childcare":
+        await executeChildcareEvent();
+        break;
+
+      case "diversity":
+        await executeDiversityEvent();
+        break;
+
+      case "complaint":
+        await executeComplaintEvent();
+        break;
+
+      case "headhunting":
+        await executeHeadhuntingEvent();
+        break;
+
+      case "winter":
+        await executeWinterEvent();
+        break;
+
+      case "disability":
+        await executeDisabilityEvent();
+        break;
+
+      case "powerHarassment":
+        await executePowerHarassmentEvent();
+        break;
+
+      case "strike":
+        await executeStrikeEvent();
+        break;
+
+      case "training":
+        await executeTrainingEvent();
+        break;
+
+      default:
+        throw new Error(
+          "イベントが見つかりません。"
+        );
+    }
+
+    updateAllPerformance();
+    renderRankings();
+    renderCompanyStats();
+
+    eventStatusText.textContent =
+      "イベントの処理が完了しました。";
+
+    gameAdvice.textContent =
+      "次のターンへ進みます。";
+
+    await wait(800);
+
+    goToNextTurn();
+  } catch (error) {
+    console.error(error);
+
+    eventRunning = false;
+
+    showMessage(
+      "イベント処理中にエラーが発生しました。",
+      "error"
+    );
+
+    renderGame();
+  }
+}
+
+
+function goToNextTurn() {
+  if (currentTurn >= TOTAL_TURNS) {
     showResult();
     return;
   }
 
   currentTurn += 1;
   currentEventIndex += 1;
+  eventRunning = false;
 
-  renderTurn();
+  renderGame();
 }
 
 
 /* =========================================================
-   リザルト
+   育児休業
+========================================================= */
+
+async function executeChildcareEvent() {
+  for (const player of players) {
+    const targetEmployees =
+      player.employees.filter(
+        (employee) =>
+          employee.parentalLeave
+      );
+
+    const targetText =
+      targetEmployees.length > 0
+        ? targetEmployees
+            .map((employee) => employee.name)
+            .join("・")
+        : "対象社員なし";
+
+    const choice =
+      await openEventModal({
+        companyName:
+          player.company.name,
+
+        title: "育児休業",
+
+        message:
+          `育児休業を希望する社員：${targetText}\n` +
+          "会社としてどのように対応しますか？",
+
+        options: [
+          {
+            label:
+              "希望どおり全員の育児休業を認める　★＋4",
+            value: "all",
+            important: true
+          },
+          {
+            label:
+              "一部の社員だけ認める　★＋2",
+            value: "some"
+          },
+          {
+            label:
+              "全員認めるが、希望とは異なる期間にする　★＋1",
+            value: "different"
+          },
+          {
+            label:
+              "育児休業を認めない　変化なし",
+            value: "reject",
+            danger: true
+          }
+        ]
+      });
+
+    const starChanges = {
+      all: 4,
+      some: 2,
+      different: 1,
+      reject: 0
+    };
+
+    player.whiteStars +=
+      starChanges[choice] || 0;
+  }
+}
+
+
+/* =========================================================
+   多様性イベント
+========================================================= */
+
+async function executeDiversityEvent() {
+  for (const player of players) {
+    const categories = new Set();
+
+    player.employees.forEach(
+      (employee) => {
+        categories.add(employee.diet);
+        categories.add(employee.habitat);
+
+        if (employee.parentalLeave) {
+          categories.add(
+            "parentalLeave"
+          );
+        }
+
+        if (employee.hibernation) {
+          categories.add(
+            "hibernation"
+          );
+        }
+
+        if (employee.disability) {
+          categories.add(
+            "disability"
+          );
+        }
+      }
+    );
+
+    let bonus = 0;
+
+    if (categories.size >= 8) {
+      bonus = 20;
+    } else if (categories.size >= 7) {
+      bonus = 15;
+    }
+
+    player.performanceBonus += bonus;
+
+    await openEventModal({
+      companyName:
+        player.company.name,
+
+      title:
+        "みんなちがって、みんないい",
+
+      message:
+        `社員の属性は${categories.size}種類でした。\n` +
+        `業績＋${bonus}pt`,
+
+      options: [
+        {
+          label: "確認",
+          value: "ok",
+          important: true
+        }
+      ]
+    });
+  }
+}
+
+
+/* =========================================================
+   社内からの不満
+========================================================= */
+
+async function executeComplaintEvent() {
+  for (const player of players) {
+    const counts = {
+      grass: 0,
+      meat: 0,
+      land: 0,
+      sea: 0
+    };
+
+    player.employees.forEach(
+      (employee) => {
+        if (employee.diet === "grass") {
+          counts.grass += 1;
+        }
+
+        if (employee.diet === "meat") {
+          counts.meat += 1;
+        }
+
+        if (employee.habitat === "land") {
+          counts.land += 1;
+        }
+
+        if (employee.habitat === "sea") {
+          counts.sea += 1;
+        }
+      }
+    );
+
+    const labels = {
+      grass: "草食",
+      meat: "肉食",
+      land: "陸",
+      sea: "海"
+    };
+
+    const matchingGroups =
+      Object.entries(counts)
+        .filter(([, count]) => {
+          return count >= 3;
+        })
+        .map(([key]) => {
+          return labels[key];
+        });
+
+    const penalty =
+      matchingGroups.length > 0
+        ? 10
+        : 0;
+
+    player.performanceBonus -=
+      penalty;
+
+    await openEventModal({
+      companyName:
+        player.company.name,
+
+      title: "社内からの不満",
+
+      message:
+        matchingGroups.length > 0
+          ? `${matchingGroups.join("・")}の社員が3人以上います。\n業績－10pt`
+          : "社員の属性に大きな偏りはありませんでした。",
+
+      options: [
+        {
+          label: "確認",
+          value: "ok",
+          important: true
+        }
+      ]
+    });
+  }
+}
+
+
+/* =========================================================
+   ヘッドハンティング
+========================================================= */
+
+async function executeHeadhuntingEvent() {
+  updateAllPerformance();
+
+  const ascendingRanking =
+    [...players].sort(
+      (playerA, playerB) => {
+        return (
+          playerA.currentPerformance -
+          playerB.currentPerformance
+        );
+      }
+    );
+
+  const lowestPlayer =
+    ascendingRanking[0];
+
+  const ownEmployeeId =
+    await chooseEmployee(
+      lowestPlayer,
+      "交換に出す社員を選んでください。"
+    );
+
+  const ownEmployeeIndex =
+    lowestPlayer.employees.findIndex(
+      (employee) =>
+        employee.id === ownEmployeeId
+    );
+
+  const otherPlayers =
+    players.filter((player) => {
+      return (
+        player.id !== lowestPlayer.id
+      );
+    });
+
+  const targetPlayerId =
+    await openEventModal({
+      companyName:
+        lowestPlayer.company.name,
+
+      title: "交換する会社",
+
+      message:
+        "社員を交換したい会社を選んでください。",
+
+      options: otherPlayers.map(
+        (player) => ({
+          label: player.company.name,
+          value: player.id
+        })
+      )
+    });
+
+  const targetPlayer =
+    players.find((player) => {
+      return (
+        player.id ===
+        Number(targetPlayerId)
+      );
+    });
+
+  const targetEmployeeId =
+    await chooseEmployee(
+      targetPlayer,
+      "迎え入れる社員を選んでください。"
+    );
+
+  const targetEmployeeIndex =
+    targetPlayer.employees.findIndex(
+      (employee) =>
+        employee.id === targetEmployeeId
+    );
+
+  const ownEmployee =
+    lowestPlayer.employees[
+      ownEmployeeIndex
+    ];
+
+  const targetEmployee =
+    targetPlayer.employees[
+      targetEmployeeIndex
+    ];
+
+  lowestPlayer.employees[
+    ownEmployeeIndex
+  ] = targetEmployee;
+
+  targetPlayer.employees[
+    targetEmployeeIndex
+  ] = ownEmployee;
+
+  await openEventModal({
+    companyName:
+      lowestPlayer.company.name,
+
+    title: "社員交換完了",
+
+    message:
+      `${ownEmployee.name}と` +
+      `${targetEmployee.name}を交換しました。`,
+
+    options: [
+      {
+        label: "確認",
+        value: "ok",
+        important: true
+      }
+    ]
+  });
+}
+
+
+/* =========================================================
+   冬眠
+========================================================= */
+
+async function executeWinterEvent() {
+  for (const player of players) {
+    const hibernatingEmployees =
+      player.employees.filter(
+        (employee) =>
+          employee.hibernation
+      );
+
+    if (
+      hibernatingEmployees.length === 0
+    ) {
+      await openEventModal({
+        companyName:
+          player.company.name,
+
+        title: "冬がやってきた",
+
+        message:
+          "冬眠する社員はいませんでした。",
+
+        options: [
+          {
+            label: "確認",
+            value: "ok"
+          }
+        ]
+      });
+
+      continue;
+    }
+
+    for (
+      const employee of
+      hibernatingEmployees
+    ) {
+      const choice =
+        await openEventModal({
+          companyName:
+            player.company.name,
+
+          title: "冬がやってきた",
+
+          message:
+            `${employee.name}が冬眠を希望しています。`,
+
+          employee,
+
+          options: [
+            {
+              label:
+                "休ませる　★＋1",
+              value: "rest",
+              important: true
+            },
+            {
+              label:
+                "そのまま働いてもらう",
+              value: "work"
+            }
+          ]
+        });
+
+      if (choice === "rest") {
+        player.whiteStars += 1;
+      }
+    }
+  }
+}
+
+
+/* =========================================================
+   ひとりじゃない
+========================================================= */
+
+async function executeDisabilityEvent() {
+  for (const player of players) {
+    const targetCount =
+      player.employees.filter(
+        (employee) =>
+          employee.disability
+      ).length;
+
+    const bonus =
+      targetCount * 10;
+
+    player.performanceBonus += bonus;
+
+    await openEventModal({
+      companyName:
+        player.company.name,
+
+      title: "ひとりじゃない",
+
+      message:
+        targetCount > 0
+          ? `対象社員が${targetCount}人います。\n業績＋${bonus}pt`
+          : "現在、対象として設定された社員はいません。",
+
+      options: [
+        {
+          label: "確認",
+          value: "ok",
+          important: true
+        }
+      ]
+    });
+  }
+}
+
+
+/* =========================================================
+   パワーハラスメント
+========================================================= */
+
+async function executePowerHarassmentEvent() {
+  for (const player of players) {
+    const targetEmployees =
+      player.employees.filter(
+        (employee) =>
+          employee.powerHarassment
+      );
+
+    if (
+      targetEmployees.length === 0
+    ) {
+      await openEventModal({
+        companyName:
+          player.company.name,
+
+        title:
+          "パワーハラスメント",
+
+        message:
+          "パワーハラスメントを行う社員はいませんでした。",
+
+        options: [
+          {
+            label: "確認",
+            value: "ok"
+          }
+        ]
+      });
+
+      continue;
+    }
+
+    for (
+      const employee of
+      targetEmployees
+    ) {
+      const choice =
+        await openEventModal({
+          companyName:
+            player.company.name,
+
+          title:
+            "パワーハラスメント",
+
+          message:
+            `${employee.name}による問題が発覚しました。\n` +
+            `タイプ：${employee.harassmentType}`,
+
+          employee,
+
+          options: [
+            {
+              label:
+                "業績20ptを使って更生プログラムを行う",
+              value: "rehabilitate",
+              important: true
+            },
+            {
+              label:
+                "問題を見過ごす",
+              value: "ignore",
+              danger: true
+            }
+          ]
+        });
+
+      if (
+        choice === "rehabilitate"
+      ) {
+        player.performanceBonus -= 20;
+        employee.powerHarassment = false;
+        employee.harassmentType = "";
+      }
+    }
+  }
+}
+
+
+/* =========================================================
+   社員ストライキ
+========================================================= */
+
+async function executeStrikeEvent() {
+  const minimumStars =
+    Math.min(
+      ...players.map(
+        (player) =>
+          player.whiteStars
+      )
+    );
+
+  const targetPlayers =
+    players.filter((player) => {
+      return (
+        player.whiteStars ===
+        minimumStars
+      );
+    });
+
+  for (const player of targetPlayers) {
+    const protectedEmployees =
+      player.employees.filter(
+        (employee) =>
+          employee.parentalLeave
+      );
+
+    const replacementCount =
+      MAX_EMPLOYEES -
+      protectedEmployees.length;
+
+    const usedEmployeeIds =
+      players.flatMap(
+        (currentPlayer) => {
+          if (
+            currentPlayer.id ===
+            player.id
+          ) {
+            return protectedEmployees.map(
+              (employee) =>
+                employee.id
+            );
+          }
+
+          return currentPlayer.employees.map(
+            (employee) =>
+              employee.id
+          );
+        }
+      );
+
+    const candidates =
+      shuffleArray(
+        EMPLOYEE_DATA.filter(
+          (employee) => {
+            return !usedEmployeeIds.includes(
+              employee.id
+            );
+          }
+        )
+      );
+
+    const newEmployees =
+      candidates
+        .slice(0, replacementCount)
+        .map(cloneEmployee);
+
+    player.employees = [
+      ...protectedEmployees,
+      ...newEmployees
+    ];
+
+    await openEventModal({
+      companyName:
+        player.company.name,
+
+      title: "社員ストライキ",
+
+      message:
+        protectedEmployees.length > 0
+          ? "育休対象の社員を除く社員が入れ替わりました。"
+          : "すべての社員が入れ替わりました。",
+
+      options: [
+        {
+          label: "確認",
+          value: "ok",
+          important: true
+        }
+      ]
+    });
+  }
+}
+
+
+/* =========================================================
+   社員研修
+========================================================= */
+
+async function executeTrainingEvent() {
+  for (const player of players) {
+    updateAllPerformance();
+
+    const choice =
+      await openEventModal({
+        companyName:
+          player.company.name,
+
+        title: "社員研修",
+
+        message:
+          "業績2ptを使って、社員1人の能力を1上げますか？",
+
+        options: [
+          {
+            label:
+              "研修を行う　業績－2pt",
+            value: "train",
+            important: true
+          },
+          {
+            label:
+              "今回は行わない",
+            value: "skip"
+          }
+        ]
+      });
+
+    if (choice !== "train") {
+      continue;
+    }
+
+    if (
+      player.currentPerformance < 2
+    ) {
+      await openEventModal({
+        companyName:
+          player.company.name,
+
+        title: "社員研修",
+
+        message:
+          "業績が不足しているため、研修を行えません。",
+
+        options: [
+          {
+            label: "確認",
+            value: "ok"
+          }
+        ]
+      });
+
+      continue;
+    }
+
+    const employeeId =
+      await chooseEmployee(
+        player,
+        "研修を受ける社員を選んでください。"
+      );
+
+    const employee =
+      player.employees.find(
+        (item) =>
+          item.id === employeeId
+      );
+
+    const availableColors =
+      Object.keys(SKILL_LABELS).filter(
+        (color) =>
+          employee.skills[color] < 5
+      );
+
+    if (
+      availableColors.length === 0
+    ) {
+      await openEventModal({
+        companyName:
+          player.company.name,
+
+        title: "社員研修",
+
+        message:
+          "この社員の能力は、すべて最大です。",
+
+        options: [
+          {
+            label: "確認",
+            value: "ok"
+          }
+        ]
+      });
+
+      continue;
+    }
+
+    const skillColor =
+      await openEventModal({
+        companyName:
+          player.company.name,
+
+        title: "伸ばす能力",
+
+        message:
+          `${employee.name}の伸ばす能力を選んでください。`,
+
+        employee,
+
+        options:
+          availableColors.map(
+            (color) => ({
+              label:
+                `${SKILL_LABELS[color]}　` +
+                `${employee.skills[color]} → ` +
+                `${employee.skills[color] + 1}`,
+
+              value: color
+            })
+          )
+      });
+
+    player.performanceBonus -= 2;
+    employee.skills[skillColor] += 1;
+
+    await openEventModal({
+      companyName:
+        player.company.name,
+
+      title: "研修完了",
+
+      message:
+        `${employee.name}の` +
+        `${SKILL_LABELS[skillColor]}が1上がりました。`,
+
+      options: [
+        {
+          label: "確認",
+          value: "ok",
+          important: true
+        }
+      ]
+    });
+  }
+}
+
+
+/* =========================================================
+   結果画面
 ========================================================= */
 
 function showResult() {
   updateAllPerformance();
 
-  showScreen("resultScreen");
+  const ranking =
+    getFinalRanking();
 
   resultRanking.innerHTML = "";
 
-  getFinalRanking().forEach(
+  ranking.forEach(
     (player, index) => {
       const item =
+        document.createElement("article");
+
+      const rank =
         document.createElement("div");
 
+      const company =
+        document.createElement("div");
+
+      const score =
+        document.createElement("div");
+
+      const detail =
+        document.createElement("small");
+
       item.className =
-        "result-ranking-item";
+        "result-item";
 
-      item.innerHTML = `
-        <span class="result-rank">
-          ${index + 1}
-        </span>
+      rank.className =
+        "result-rank";
 
-        <span class="result-name">
-          ${player.name}
-        </span>
+      company.className =
+        "result-company";
 
-        <span class="result-score">
-          ${getFinalScore(player)}
-        </span>
-      `;
+      score.className =
+        "result-score";
+
+      rank.textContent =
+        `${index + 1}位`;
+
+      company.textContent =
+        player.company.name;
+
+      score.textContent =
+        `${getFinalScore(player)}pt`;
+
+      detail.textContent =
+        `業績 ${player.currentPerformance}pt ／ ` +
+        `ホワイト度 ${player.whiteStars}`;
+
+      score.appendChild(detail);
+
+      item.append(
+        rank,
+        company,
+        score
+      );
 
       resultRanking.appendChild(item);
     }
   );
+
+  showScreen("resultScreen");
 }
+
+
+/* =========================================================
+   リスタート
+========================================================= */
+
 function restartGame() {
   storyIndex = 0;
-
   playerCount = 2;
 
   currentCompanyPlayerIndex = 0;
@@ -1945,32 +2768,51 @@ function restartGame() {
   turnEvents = [];
   players = [];
 
+  eventRunning = false;
+
+  eventModal.classList.add("hidden");
+
   renderStory();
+  renderPlayerSelection();
 
   showScreen("storyScreen");
 }
 
 
 /* =========================================================
-   NFC連携（Swiftから呼び出す）
+   Swift・NFC連携
 ========================================================= */
 
 window.NFCBridge = {
   receiveCompany(companyId) {
-    receiveCompany(companyId);
+    receiveCompany(
+      String(companyId)
+    );
   },
 
   receiveEmployee(employeeId) {
-    receiveEmployee(employeeId);
+    receiveEmployee(
+      String(employeeId)
+    );
+  },
+
+  receiveByUid(uid) {
+    handleUidScan(String(uid));
+  },
+
+  showMessage(message) {
+    showMessage(
+      String(message)
+    );
   }
 };
 
 
 /* =========================================================
-   イベント登録
+   イベントリスナー
 ========================================================= */
 
-storyActionButton.addEventListener(
+storyNextButton.addEventListener(
   "click",
   goToNextStory
 );
@@ -1985,7 +2827,7 @@ plusButton.addEventListener(
   increasePlayerCount
 );
 
-playerConfirmButton.addEventListener(
+confirmPlayersButton.addEventListener(
   "click",
   confirmPlayerCount
 );
@@ -2002,22 +2844,22 @@ mockEmployeeScanButton.addEventListener(
 
 registerEmployeeButton.addEventListener(
   "click",
-  registerEmployee
+  registerSelectedEmployee
 );
 
 cancelEmployeeButton.addEventListener(
   "click",
-  cancelEmployeeRegistration
+  cancelSelectedEmployee
 );
 
 finishEmployeeButton.addEventListener(
   "click",
-  finishEmployeeRegistration
+  finishCurrentEmployeeRegistration
 );
 
 nextTurnButton.addEventListener(
   "click",
-  nextTurn
+  executeCurrentEvent
 );
 
 restartButton.addEventListener(
@@ -2027,11 +2869,104 @@ restartButton.addEventListener(
 
 
 /* =========================================================
-   初期化
+   初期表示
 ========================================================= */
 
 renderStory();
-
 renderPlayerSelection();
-
 showScreen("storyScreen");
+
+
+/* =========================================================
+   カードUID読み取り（キーボードウェッジ）
+
+   iPadに接続したNFCリーダーがUIDをキー入力として打ち込み、
+   末尾のEnterで確定する方式を想定。
+   会社登録画面・社員登録画面でのみ有効にし、
+   UID → 会社id/社員id を card-db.js の対応表で引いて登録する。
+========================================================= */
+
+function handleUidScan(rawUid) {
+  if (!window.CardDB) {
+    showMessage("UIDデータベースを読み込めていません。", "error");
+    return;
+  }
+
+  const uid = CardDB.normalizeUid(rawUid);
+  if (!uid) {
+    return;
+  }
+
+  const activeScreen = document.querySelector(".screen.active");
+  const activeId = activeScreen ? activeScreen.id : "";
+
+  const db = CardDB.load();
+  const hit = CardDB.lookup(db, uid);
+
+  if (!hit) {
+    showMessage(
+      `未登録のカードです（UID: ${uid}）。登録ページで先に登録してください。`,
+      "error"
+    );
+    return;
+  }
+
+  if (hit.kind === "company") {
+    if (activeId !== "companyScreen") {
+      showMessage("会社カードは会社登録画面で読み取ってください。", "error");
+      return;
+    }
+    receiveCompany(hit.id);
+    return;
+  }
+
+  // hit.kind === "employee"
+  if (activeId !== "employeeScreen") {
+    showMessage("社員カードは社員登録画面で読み取ってください。", "error");
+    return;
+  }
+  receiveEmployee(hit.id);
+}
+
+let uidScanBuffer = "";
+let uidScanLastKey = 0;
+
+document.addEventListener("keydown", (event) => {
+  const activeScreen = document.querySelector(".screen.active");
+  const activeId = activeScreen ? activeScreen.id : "";
+
+  // 読み取りは会社登録・社員登録画面のみ
+  if (activeId !== "companyScreen" && activeId !== "employeeScreen") {
+    return;
+  }
+
+  // イベントモーダル表示中は無視
+  if (eventModal && !eventModal.classList.contains("hidden")) {
+    return;
+  }
+
+  const now = Date.now();
+  if (now - uidScanLastKey > 800) {
+    uidScanBuffer = "";
+  }
+  uidScanLastKey = now;
+
+  if (event.key === "Enter") {
+    if (uidScanBuffer.length > 0) {
+      const scanned = uidScanBuffer.trim();
+      uidScanBuffer = "";
+      event.preventDefault();
+      handleUidScan(scanned);
+    }
+    return;
+  }
+
+  if (event.key.length === 1) {
+    uidScanBuffer += event.key;
+  }
+});
+
+/* 起動時：localStorageが空なら、同ディレクトリの card-uid-db.json を初期DBとして読み込む */
+if (window.CardDB) {
+  CardDB.loadSeedIfEmpty("card-uid-db.json").catch(() => {});
+}
