@@ -2962,19 +2962,33 @@ document.addEventListener(
     }
   }
 );
-/* 起動時：localStorageが空なら、同ディレクトリの
-   card-uid-db.json を初期DBとして読み込む
 
-/* 起動時にUIDデータベースを読み込んでから開始 */
+/* =========================================================
+   起動時の初期化
+========================================================= */
+
 async function initializeGame() {
   if (window.CardDB) {
     try {
-      const db = await CardDB.loadSeedIfEmpty("card-uid-db.json");
-      console.log("UIDデータベース読み込み完了", db);
-    } catch (e) {
-      console.error("UIDデータベースの読み込み失敗", e);
+      const db = await CardDB.loadSeedIfEmpty(
+        "card-uid-db.json"
+      );
+
+      console.log(
+        "UIDデータベース読み込み完了",
+        db
+      );
+    } catch (error) {
+      console.error(
+        "UIDデータベースの読み込みに失敗しました。",
+        error
+      );
     }
   }
+
+  renderStory();
+  renderPlayerSelection();
+  showScreen("storyScreen");
 }
 
 initializeGame();
