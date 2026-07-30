@@ -27,13 +27,14 @@ const SKILL_SHORT_LABELS = {
 /* ---------------------------------------------------------
    隠しステータス設定
 
-   社員登録画面で「育休対象」「パワハラ」を表示するかどうか。
-   false ＝ 隠しステータス（登録時には見えない）
-   true  ＝ 従来どおり登録画面にも表示する
+   社員登録画面で「育休対象」「パワハラ」を
+   表示するかどうかを設定します。
 
-   ※ データ自体は保持されるため、イベント（育児休業・
-     パワーハラスメント・社員ストライキ）の判定と表示は
-     この設定に関係なく従来どおり動作します。
+   false ＝ 登録時には表示しない
+   true  ＝ 登録時にも表示する
+
+   データ自体は保持されるため、
+   イベントの判定には影響しません。
 --------------------------------------------------------- */
 
 const SHOW_PARENTAL_LEAVE_TRAIT = false;
@@ -44,23 +45,21 @@ const SHOW_HARASSMENT_TRAIT = false;
    会社データ
 ========================================================= */
 
-// COMPANY_DATA は game-data.js で定義（登録ページと共有）
+// COMPANY_DATA は game-data.js で定義しています。
 
 
 /* =========================================================
    社員データ
 
-   skillsの順番
+   skillsの色
+
    red    ：体力
    yellow ：コミュ力
    blue   ：知力
    pink   ：器用さ
-
-   disabilityは資料内に指定がなかったため、
-   現段階では全員falseにしています。
 ========================================================= */
 
-// EMPLOYEE_DATA は game-data.js で定義（登録ページと共有）
+// EMPLOYEE_DATA は game-data.js で定義しています。
 
 
 /* =========================================================
@@ -138,175 +137,287 @@ const EVENT_DATA = [
    DOM取得
 ========================================================= */
 
-const screens = document.querySelectorAll(".screen");
+const screens =
+  document.querySelectorAll(".screen");
 
 const storyNextButton =
-  document.getElementById("storyNextButton");
+  document.getElementById(
+    "storyNextButton"
+  );
 
 const storyImage =
-  document.getElementById("storyImage");
+  document.getElementById(
+    "storyImage"
+  );
 
 const storyActionButton =
-  document.getElementById("storyActionButton");
+  document.getElementById(
+    "storyActionButton"
+  );
 
 const playerIcons =
-  document.getElementById("playerIcons");
+  document.getElementById(
+    "playerIcons"
+  );
 
 const playerNumber =
-  document.getElementById("playerNumber");
+  document.getElementById(
+    "playerNumber"
+  );
 
 const minusButton =
-  document.getElementById("minusButton");
+  document.getElementById(
+    "minusButton"
+  );
 
 const plusButton =
-  document.getElementById("plusButton");
+  document.getElementById(
+    "plusButton"
+  );
 
 const confirmPlayersButton =
-  document.getElementById("confirmPlayersButton");
+  document.getElementById(
+    "confirmPlayersButton"
+  );
 
 const companyCurrentPlayer =
-  document.getElementById("companyCurrentPlayer");
+  document.getElementById(
+    "companyCurrentPlayer"
+  );
 
 const companyList =
-  document.getElementById("companyList");
+  document.getElementById(
+    "companyList"
+  );
 
 const companyPreviewArea =
-  document.getElementById("companyPreviewArea");
+  document.getElementById(
+    "companyPreviewArea"
+  );
 
 const companyPreviewImage =
-  document.getElementById("companyPreviewImage");
+  document.getElementById(
+    "companyPreviewImage"
+  );
 
 const companyPreviewName =
-  document.getElementById("companyPreviewName");
+  document.getElementById(
+    "companyPreviewName"
+  );
 
 const companyPreviewIndustry =
-  document.getElementById("companyPreviewIndustry");
+  document.getElementById(
+    "companyPreviewIndustry"
+  );
 
 const companyScoreColorList =
-  document.getElementById("companyScoreColorList");
+  document.getElementById(
+    "companyScoreColorList"
+  );
 
 const mockCompanyScanButton =
-  document.getElementById("mockCompanyScanButton");
+  document.getElementById(
+    "mockCompanyScanButton"
+  );
 
 const employeeCurrentPlayer =
-  document.getElementById("employeeCurrentPlayer");
+  document.getElementById(
+    "employeeCurrentPlayer"
+  );
 
 const employeeSlots =
-  document.getElementById("employeeSlots");
+  document.getElementById(
+    "employeeSlots"
+  );
 
 const employeePreview =
-  document.getElementById("employeePreview");
+  document.getElementById(
+    "employeePreview"
+  );
 
 const employeePreviewName =
-  document.getElementById("employeePreviewName");
+  document.getElementById(
+    "employeePreviewName"
+  );
 
 const employeeSkillPreview =
-  document.getElementById("employeeSkillPreview");
+  document.getElementById(
+    "employeeSkillPreview"
+  );
 
 const employeeCompanyScore =
-  document.getElementById("employeeCompanyScore");
+  document.getElementById(
+    "employeeCompanyScore"
+  );
 
 const employeeTraitList =
-  document.getElementById("employeeTraitList");
+  document.getElementById(
+    "employeeTraitList"
+  );
 
 const employeeSkillRedBar =
-  document.getElementById("employeeSkillRedBar");
+  document.getElementById(
+    "employeeSkillRedBar"
+  );
 
 const employeeSkillYellowBar =
-  document.getElementById("employeeSkillYellowBar");
+  document.getElementById(
+    "employeeSkillYellowBar"
+  );
 
 const employeeSkillBlueBar =
-  document.getElementById("employeeSkillBlueBar");
+  document.getElementById(
+    "employeeSkillBlueBar"
+  );
 
 const employeeSkillPinkBar =
-  document.getElementById("employeeSkillPinkBar");
+  document.getElementById(
+    "employeeSkillPinkBar"
+  );
 
 const employeeSkillRedValue =
-  document.getElementById("employeeSkillRedValue");
+  document.getElementById(
+    "employeeSkillRedValue"
+  );
 
 const employeeSkillYellowValue =
-  document.getElementById("employeeSkillYellowValue");
+  document.getElementById(
+    "employeeSkillYellowValue"
+  );
 
 const employeeSkillBlueValue =
-  document.getElementById("employeeSkillBlueValue");
+  document.getElementById(
+    "employeeSkillBlueValue"
+  );
 
 const employeeSkillPinkValue =
-  document.getElementById("employeeSkillPinkValue");
-
+  document.getElementById(
+    "employeeSkillPinkValue"
+  );
 const mockEmployeeScanButton =
-  document.getElementById("mockEmployeeScanButton");
+  document.getElementById(
+    "mockEmployeeScanButton"
+  );
 
 const registerEmployeeButton =
-  document.getElementById("registerEmployeeButton");
+  document.getElementById(
+    "registerEmployeeButton"
+  );
 
 const cancelEmployeeButton =
-  document.getElementById("cancelEmployeeButton");
+  document.getElementById(
+    "cancelEmployeeButton"
+  );
 
 const finishEmployeeButton =
-  document.getElementById("finishEmployeeButton");
+  document.getElementById(
+    "finishEmployeeButton"
+  );
 
 const turnDisplay =
-  document.getElementById("turnDisplay");
+  document.getElementById(
+    "turnDisplay"
+  );
 
 const eventImage =
-  document.getElementById("eventImage");
+  document.getElementById(
+    "eventImage"
+  );
 
 const eventTitle =
-  document.getElementById("eventTitle");
+  document.getElementById(
+    "eventTitle"
+  );
 
 const eventStatusText =
-  document.getElementById("eventStatusText");
+  document.getElementById(
+    "eventStatusText"
+  );
 
 const nextTurnButton =
-  document.getElementById("nextTurnButton");
+  document.getElementById(
+    "nextTurnButton"
+  );
 
 const performanceRanking =
-  document.getElementById("performanceRanking");
+  document.getElementById(
+    "performanceRanking"
+  );
 
 const whiteRanking =
-  document.getElementById("whiteRanking");
+  document.getElementById(
+    "whiteRanking"
+  );
 
 const companyStats =
-  document.getElementById("companyStats");
+  document.getElementById(
+    "companyStats"
+  );
 
 const gameAdvice =
-  document.getElementById("gameAdvice");
+  document.getElementById(
+    "gameAdvice"
+  );
 
 const resultRanking =
-  document.getElementById("resultRanking");
+  document.getElementById(
+    "resultRanking"
+  );
 
 const restartButton =
-  document.getElementById("restartButton");
+  document.getElementById(
+    "restartButton"
+  );
 
 const eventModal =
-  document.getElementById("eventModal");
+  document.getElementById(
+    "eventModal"
+  );
 
 const eventModalCompany =
-  document.getElementById("eventModalCompany");
+  document.getElementById(
+    "eventModalCompany"
+  );
 
 const eventModalTitle =
-  document.getElementById("eventModalTitle");
+  document.getElementById(
+    "eventModalTitle"
+  );
 
 const eventModalMessage =
-  document.getElementById("eventModalMessage");
+  document.getElementById(
+    "eventModalMessage"
+  );
 
 const eventModalOptions =
-  document.getElementById("eventModalOptions");
+  document.getElementById(
+    "eventModalOptions"
+  );
 
 const eventModalEmployeePreview =
-  document.getElementById("eventModalEmployeePreview");
+  document.getElementById(
+    "eventModalEmployeePreview"
+  );
 
 const eventModalEmployeeImage =
-  document.getElementById("eventModalEmployeeImage");
+  document.getElementById(
+    "eventModalEmployeeImage"
+  );
 
 const eventModalEmployeeName =
-  document.getElementById("eventModalEmployeeName");
+  document.getElementById(
+    "eventModalEmployeeName"
+  );
 
 const eventModalEmployeeDetail =
-  document.getElementById("eventModalEmployeeDetail");
+  document.getElementById(
+    "eventModalEmployeeDetail"
+  );
 
 const nfcMessage =
-  document.getElementById("nfcMessage");
+  document.getElementById(
+    "nfcMessage"
+  );
 
 
 /* =========================================================
@@ -330,8 +441,6 @@ let eventRunning = false;
 let messageTimer = null;
 
 let players = [];
-
-
 /* =========================================================
    共通処理
 ========================================================= */
@@ -602,8 +711,6 @@ function getStarText(count) {
 
   return "★".repeat(safeCount);
 }
-
-
 /* =========================================================
    ストーリー画面
 ========================================================= */
@@ -887,8 +994,6 @@ function receiveCompany(companyId) {
     renderCompanyRegistration();
   }, 900);
 }
-
-
 function mockCompanyScan() {
   const usedCompanyIds =
     players
@@ -1084,11 +1189,7 @@ function renderEmployeePreview(employee) {
     getHabitatLabel(employee.habitat)
   ];
 
-  // 育休対象：隠しステータス（SHOW_PARENTAL_LEAVE_TRAIT で切替）
-  if (
-    SHOW_PARENTAL_LEAVE_TRAIT &&
-    employee.parentalLeave
-  ) {
+  if (employee.parentalLeave) {
     traits.push("育休対象");
   }
 
@@ -1096,11 +1197,7 @@ function renderEmployeePreview(employee) {
     traits.push("冬眠");
   }
 
-  // パワハラ：隠しステータス（SHOW_HARASSMENT_TRAIT で切替）
-  if (
-    SHOW_HARASSMENT_TRAIT &&
-    employee.powerHarassment
-  ) {
+  if (employee.powerHarassment) {
     traits.push(
       employee.harassmentType ||
       "パワハラ注意"
@@ -1228,14 +1325,16 @@ function mockEmployeeScan() {
       return player.employees.map(
         (employee) => employee.id
       );
-    });
+           });
 
   const candidates =
-    EMPLOYEE_DATA.filter((employee) => {
-      return !usedEmployeeIds.includes(
-        employee.id
-      );
-    });
+    EMPLOYEE_DATA.filter(
+      (employee) => {
+        return !usedEmployeeIds.includes(
+          employee.id
+        );
+      }
+    );
 
   const employee =
     getRandomItem(candidates);
@@ -1417,8 +1516,6 @@ function startGame() {
   showScreen("gameScreen");
   renderGame();
 }
-
-
 function renderGame() {
   updateAllPerformance();
 
@@ -1597,14 +1694,14 @@ function renderCompanyStats() {
   companyStats.className =
     `company-stats company-count-${players.length}`;
 
-  const maximumPerformance =
-    Math.max(
-      40,
-      ...players.map(
-        (player) =>
-          player.currentPerformance
-      )
-    );
+  /*
+    棒グラフの最大値を100ptに固定します。
+
+    最大値を現在の最高業績に合わせると、
+    業績が増減しても棒の長さがほとんど
+   変わらないように見えるためです。
+  */
+  const maximumPerformance = 100;
 
   players.forEach((player) => {
     const card =
@@ -1681,8 +1778,6 @@ function renderCompanyStats() {
     companyStats.appendChild(card);
   });
 }
-
-
 /* =========================================================
    イベントモーダル
 ========================================================= */
@@ -1863,6 +1958,11 @@ async function executeCurrentEvent() {
         );
     }
 
+    /*
+      イベントでperformanceBonusなどが
+      変更されたあと、業績・ランキング・
+      棒グラフをすぐに更新します。
+    */
     updateAllPerformance();
     renderRankings();
     renderCompanyStats();
@@ -1972,8 +2072,6 @@ async function executeChildcareEvent() {
       starChanges[choice] || 0;
   }
 }
-
-
 /* =========================================================
    多様性イベント
 ========================================================= */
@@ -2234,179 +2332,6 @@ async function executeHeadhuntingEvent() {
     ]
   });
 }
-
-
-/* =========================================================
-   冬眠
-========================================================= */
-
-async function executeWinterEvent() {
-  for (const player of players) {
-    const hibernatingEmployees =
-      player.employees.filter(
-        (employee) =>
-          employee.hibernation
-      );
-
-    if (
-      hibernatingEmployees.length === 0
-    ) {
-      await openEventModal({
-        companyName:
-          player.company.name,
-
-        title: "冬がやってきた",
-
-        message:
-          "冬眠する社員はいませんでした。",
-
-        options: [
-          {
-            label: "確認",
-            value: "ok"
-          }
-        ]
-      });
-
-      continue;
-    }
-
-    for (
-      const employee of
-      hibernatingEmployees
-    ) {
-      const choice =
-        await openEventModal({
-          companyName:
-            player.company.name,
-
-          title: "冬がやってきた",
-
-          message:
-            `${employee.name}が冬眠を希望しています。`,
-
-          employee,
-
-          options: [
-            {
-              label:
-                "休ませる　★＋1",
-              value: "rest",
-              important: true
-            },
-            {
-              label:
-                "そのまま働いてもらう",
-              value: "work"
-            }
-          ]
-        });
-
-      if (choice === "rest") {
-        player.whiteStars += 1;
-      }
-    }
-  }
-}
-
-
-/* =========================================================
-   ひとりじゃない
-========================================================= */
-
-async function executeDisabilityEvent() {
-  for (const player of players) {
-    const targetCount =
-      player.employees.filter(
-        (employee) =>
-          employee.disability
-      ).length;
-
-    const bonus =
-      targetCount * 10;
-
-    player.performanceBonus += bonus;
-
-    await openEventModal({
-      companyName:
-        player.company.name,
-
-      title: "ひとりじゃない",
-
-      message:
-        targetCount > 0
-          ? `対象社員が${targetCount}人います。\n業績＋${bonus}pt`
-          : "現在、対象として設定された社員はいません。",
-
-      options: [
-        {
-          label: "確認",
-          value: "ok",
-          important: true
-        }
-      ]
-    });
-  }
-}
-
-
-/* =========================================================
-   パワーハラスメント
-========================================================= */
-
-async function executePowerHarassmentEvent() {
-  for (const player of players) {
-    const targetEmployees =
-      player.employees.filter(
-        (employee) =>
-          employee.powerHarassment
-      );
-
-    if (
-      targetEmployees.length === 0
-    ) {
-      await openEventModal({
-        companyName:
-          player.company.name,
-
-        title:
-          "パワーハラスメント",
-
-        message:
-          "パワーハラスメントを行う社員はいませんでした。",
-
-        options: [
-          {
-            label: "確認",
-            value: "ok"
-          }
-        ]
-      });
-
-      continue;
-    }
-
-    for (
-      const employee of
-      targetEmployees
-    ) {
-      const choice =
-        await openEventModal({
-          companyName:
-            player.company.name,
-
-          title:
-            "パワーハラスメント",
-
-          message:
-            `${employee.name}による問題が発覚しました。\n` +
-            `タイプ：${employee.harassmentType}`,
-
-          employee,
-
-          options: [
-            {
-              label:
                 "業績20ptを使って更生プログラムを行う",
               value: "rehabilitate",
               important: true
@@ -2424,6 +2349,12 @@ async function executePowerHarassmentEvent() {
         choice === "rehabilitate"
       ) {
         player.performanceBonus -= 20;
+
+        // 業績を即更新
+        updateAllPerformance();
+        renderRankings();
+        renderCompanyStats();
+
         employee.powerHarassment = false;
         employee.harassmentType = "";
       }
@@ -2576,8 +2507,7 @@ async function executeTrainingEvent() {
 
         message:
           "業績が不足しているため、研修を行えません。",
-
-        options: [
+                 options: [
           {
             label: "確認",
             value: "ok"
@@ -2655,7 +2585,13 @@ async function executeTrainingEvent() {
       });
 
     player.performanceBonus -= 2;
+
     employee.skills[skillColor] += 1;
+
+    // ★ 修正：研修後すぐに業績・ランキング・棒グラフを更新
+    updateAllPerformance();
+    renderRankings();
+    renderCompanyStats();
 
     await openEventModal({
       companyName:
@@ -2677,8 +2613,6 @@ async function executeTrainingEvent() {
     });
   }
 }
-
-
 /* =========================================================
    結果画面
 ========================================================= */
@@ -2777,8 +2711,6 @@ function restartGame() {
 
   showScreen("storyScreen");
 }
-
-
 /* =========================================================
    Swift・NFC連携
 ========================================================= */
@@ -2875,8 +2807,6 @@ restartButton.addEventListener(
 renderStory();
 renderPlayerSelection();
 showScreen("storyScreen");
-
-
 /* =========================================================
    カードUID読み取り（キーボードウェッジ）
 
@@ -2888,85 +2818,155 @@ showScreen("storyScreen");
 
 function handleUidScan(rawUid) {
   if (!window.CardDB) {
-    showMessage("UIDデータベースを読み込めていません。", "error");
+    showMessage(
+      "UIDデータベースを読み込めていません。",
+      "error"
+    );
+
     return;
   }
 
-  const uid = CardDB.normalizeUid(rawUid);
+  const uid =
+    CardDB.normalizeUid(rawUid);
+
   if (!uid) {
     return;
   }
 
-  const activeScreen = document.querySelector(".screen.active");
-  const activeId = activeScreen ? activeScreen.id : "";
+  const activeScreen =
+    document.querySelector(
+      ".screen.active"
+    );
 
-  const db = CardDB.load();
-  const hit = CardDB.lookup(db, uid);
+  const activeId =
+    activeScreen
+      ? activeScreen.id
+      : "";
+
+  const db =
+    CardDB.load();
+
+  const hit =
+    CardDB.lookup(db, uid);
 
   if (!hit) {
     showMessage(
       `未登録のカードです（UID: ${uid}）。登録ページで先に登録してください。`,
       "error"
     );
+
     return;
   }
 
   if (hit.kind === "company") {
-    if (activeId !== "companyScreen") {
-      showMessage("会社カードは会社登録画面で読み取ってください。", "error");
+    if (
+      activeId !== "companyScreen"
+    ) {
+      showMessage(
+        "会社カードは会社登録画面で読み取ってください。",
+        "error"
+      );
+
       return;
     }
+
     receiveCompany(hit.id);
+
     return;
   }
 
   // hit.kind === "employee"
-  if (activeId !== "employeeScreen") {
-    showMessage("社員カードは社員登録画面で読み取ってください。", "error");
+  if (
+    activeId !== "employeeScreen"
+  ) {
+    showMessage(
+      "社員カードは社員登録画面で読み取ってください。",
+      "error"
+    );
+
     return;
   }
+
   receiveEmployee(hit.id);
 }
+
 
 let uidScanBuffer = "";
 let uidScanLastKey = 0;
 
-document.addEventListener("keydown", (event) => {
-  const activeScreen = document.querySelector(".screen.active");
-  const activeId = activeScreen ? activeScreen.id : "";
+document.addEventListener(
+  "keydown",
+  (event) => {
+    const activeScreen =
+      document.querySelector(
+        ".screen.active"
+      );
 
-  // 読み取りは会社登録・社員登録画面のみ
-  if (activeId !== "companyScreen" && activeId !== "employeeScreen") {
-    return;
-  }
+    const activeId =
+      activeScreen
+        ? activeScreen.id
+        : "";
 
-  // イベントモーダル表示中は無視
-  if (eventModal && !eventModal.classList.contains("hidden")) {
-    return;
-  }
-
-  const now = Date.now();
-  if (now - uidScanLastKey > 800) {
-    uidScanBuffer = "";
-  }
-  uidScanLastKey = now;
-
-  if (event.key === "Enter") {
-    if (uidScanBuffer.length > 0) {
-      const scanned = uidScanBuffer.trim();
-      uidScanBuffer = "";
-      event.preventDefault();
-      handleUidScan(scanned);
+    // 読み取りは会社登録・社員登録画面のみ
+    if (
+      activeId !== "companyScreen" &&
+      activeId !== "employeeScreen"
+    ) {
+      return;
     }
-    return;
-  }
 
-  if (event.key.length === 1) {
-    uidScanBuffer += event.key;
-  }
-});
+    // イベントモーダル表示中は無視
+    if (
+      eventModal &&
+      !eventModal.classList.contains(
+        "hidden"
+      )
+    ) {
+      return;
+    }
 
-/* 起動時：localStorageが空なら、同ディレクトリの card-uid-db.json を初期DBとして読み込む */
+    const now =
+      Date.now();
+
+    if (
+      now - uidScanLastKey > 800
+    ) {
+      uidScanBuffer = "";
+    }
+
+    uidScanLastKey = now;
+
+    if (
+      event.key === "Enter"
+    ) {
+      if (
+        uidScanBuffer.length > 0
+      ) {
+        const scanned =
+          uidScanBuffer.trim();
+
+        uidScanBuffer = "";
+
+        event.preventDefault();
+
+        handleUidScan(scanned);
+      }
+
+      return;
+    }
+
+    if (
+      event.key.length === 1
+    ) {
+      uidScanBuffer += event.key;
+    }
+  }
+);
+/* 起動時：localStorageが空なら、同ディレクトリの
+   card-uid-db.json を初期DBとして読み込む
+*/
 if (window.CardDB) {
-  CardDB.loadSeedIfEmpty("card-uid-db.json").catch(() => {});
+  CardDB.loadSeedIfEmpty(
+    "card-uid-db.json"
+  ).catch(() => {});
 }
