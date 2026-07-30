@@ -53,6 +53,27 @@ const COMPANY_DATA = [
     industry: "接客",
     image: "images/company-service.png",
     colors: ["yellow", "red"]
+  },
+  {
+    id: "manufacturing",
+    name: "こねこね職人",
+    industry: "製造",
+    image: "images/company-manufacturing.png",
+    colors: ["red", "pink"]
+  },
+  {
+    id: "restaurant",
+    name: "もぐもぐ工房",
+    industry: "飲食",
+    image: "images/company-restaurant.png",
+    colors: ["yellow", "pink"]
+  },
+  {
+    id: "clinic",
+    name: "ふわふわクリニック",
+    industry: "病院",
+    image: "images/company-clinic.png",
+    colors: ["blue", "pink"]
   }
 ];
 
