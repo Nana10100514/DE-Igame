@@ -9,7 +9,7 @@
     "8C272FBB": "clinic",
     "5CC32BBB": "restaurant",
     "8CFE2EBB": "manufacturing"
-},
+  },
   "employees": {
     "040090827E2491": "lion",
     "040091827E2491": "sacabambaspis",
@@ -29,6 +29,7 @@
     "04544A827E2491": "dog",
     "045449827E2491": "dolphin",
     "045448827E2491": "penguin",
- "04544F827E2491": "goat",
+    "04544F827E2491": "goat",
     "0400B7827E2491": "elephant"
+  }
 }
